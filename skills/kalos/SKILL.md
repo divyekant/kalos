@@ -605,6 +605,146 @@ code-to-design tool.
 
 ---
 
+## /kalos import — Code-to-Design Pipeline
+
+Staged pipeline that reads source code or live URLs, discovers UI structure
+and tokens, optionally reconstructs components via adapters, and integrates
+into Kalos config.
+
+Usage: `/kalos import <source>`
+- Code: `/kalos import src/components/` — reads .tsx/.vue/.html/.css/.svelte
+- URL: `/kalos import https://myapp.com/dashboard` — captures live app
+
+### Input Detection
+
+If source starts with `http://` or `https://` → **URL mode**.
+Otherwise → **Code file mode** (resolve as path or glob pattern).
+
+### Stage 1: Discover
+
+Parse inputs and extract raw design data into a **UI Model** — an
+adapter-agnostic intermediate representation held in memory.
+
+#### Code File Mode
+
+1. Glob for files matching the source path:
+   `.tsx`, `.vue`, `.html`, `.css`, `.svelte`, `.jsx`, `.scss`, `.less`
+
+2. For each file, extract:
+   - **Component boundaries** — function/class components, template blocks,
+     `export default` patterns
+   - **Colors** — hex values, rgb/rgba, CSS custom properties, Tailwind
+     color classes (e.g., `bg-blue-500` → `#3B82F6`)
+   - **Typography** — font-family declarations, font-size values,
+     font-weight, line-height, Tailwind text classes
+   - **Spacing** — margin, padding, gap values (px, rem), Tailwind
+     spacing classes (e.g., `p-4` → `16px`)
+   - **Border radii** — border-radius values, Tailwind rounded classes
+   - **Layout** — flex/grid direction, alignment, gap, nesting depth
+   - **Variants** — conditional classes, props that change appearance
+     (e.g., `variant="primary"`, `className={active ? 'bg-blue' : 'bg-gray'}`)
+
+3. Build UI Model from collected data.
+
+#### URL Mode
+
+1. **Check Chrome MCP** — call `mcp__claude-in-chrome__tabs_context_mcp`.
+   If available, use Chrome MCP. If not, fall back to headless capture.
+
+2. **Chrome MCP capture:**
+   a. Create new tab via `mcp__claude-in-chrome__tabs_create_mcp`
+   b. Navigate to URL via `mcp__claude-in-chrome__navigate`
+   c. Take screenshot via `mcp__claude-in-chrome__computer` (action: screenshot)
+   d. Read DOM structure via `mcp__claude-in-chrome__read_page`
+   e. Extract computed styles via `mcp__claude-in-chrome__javascript_tool`:
+      ```javascript
+      Array.from(document.querySelectorAll('*')).filter(el => {
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      }).map(el => {
+        const s = window.getComputedStyle(el);
+        return {
+          tag: el.tagName, classes: el.className,
+          rect: el.getBoundingClientRect(),
+          color: s.color, bg: s.backgroundColor,
+          font: s.fontFamily, fontSize: s.fontSize,
+          padding: s.padding, margin: s.margin,
+          gap: s.gap, radius: s.borderRadius,
+          display: s.display, flexDir: s.flexDirection
+        };
+      })
+      ```
+   f. Read accessibility tree via `mcp__claude-in-chrome__read_page`
+      with `filter: "all"` for component roles and hierarchy
+
+3. **Headless fallback** (if Chrome MCP unavailable):
+   a. Run `bin/capture.sh <url> <output-dir>` where output-dir is
+      a temp directory (e.g., `/tmp/kalos-import-<timestamp>`)
+   b. Read the output files: `screenshot.png`, `dom.html`, `styles.json`
+   c. If capture.sh exits with code 2: "No headless browser available.
+      Install Puppeteer (`npm install -g puppeteer`) or connect Chrome
+      MCP for URL import."
+
+4. **Analyze with Claude vision** — read the screenshot to identify:
+   - Visual sections and component boundaries
+   - Color palette in use
+   - Typography hierarchy
+   - Spacing patterns
+   - Overall layout structure
+
+5. **Merge DOM + vision** — combine structural data from DOM/styles
+   with visual analysis from screenshot. DOM provides exact values;
+   vision provides component semantics and grouping.
+
+6. Build UI Model from merged data.
+
+#### UI Model Structure
+
+```yaml
+source:
+  type: "code" | "url"
+  path: "<source path or URL>"
+  files_scanned: <n>    # code mode
+  screenshot: "<path>"  # url mode
+
+pages:
+  - name: "<page or component group>"
+    components:
+      - name: "<ComponentName>"
+        type: "frame"
+        reusable: true | false
+        layout:
+          direction: "horizontal" | "vertical"
+          gap: <px>
+          align: "<alignment>"
+        styles:
+          fill: "<color>"
+          radius: <px>
+          padding: [<top>, <right>, <bottom>, <left>]
+        variants:
+          - name: "<variant>"
+            styles: { ... }
+        children: [...]
+
+tokens:
+  colors:
+    - value: "<hex>"
+      uses: <n>
+      semantic: "primary" | "secondary" | "success" | ... | null
+  fonts:
+    - family: "<name>"
+      uses: <n>
+  spacing:
+    values: [<px>, ...]
+    inferred_base: <px>
+  radii:
+    values: [<px>, ...]
+```
+
+The UI Model is held in memory — not persisted as a file.
+
+---
+
 ## Brand Switching
 
 Switch the active brand and re-sync all adapters.
