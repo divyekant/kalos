@@ -140,6 +140,7 @@ If it does NOT exist:
     templates/
       modern.yaml
       minimal.yaml
+      brand.yaml
   ```
 - Copy template files from this skill's source: `../../config/templates/`
 - Copy defaults from: `../../config/defaults.example.yaml`
@@ -152,7 +153,7 @@ Ask questions ONE AT A TIME using AskUserQuestion.
 1. **Template choice**
    - "Which design template?"
    - Options: list template names from `~/.kalos/templates/`
-     (typically: modern, minimal)
+     (typically: modern, minimal, brand)
    - This sets the `extends` value
 
 2. **Primary color**
@@ -174,8 +175,8 @@ Ask questions ONE AT A TIME using AskUserQuestion.
 
 6. **Adapters**
    - "Which adapters to enable?"
-   - Multi-select: Pencil (recommended for v0.1.0)
-   - Note: Tailwind adapter coming in v0.2.0
+   - Multi-select: Pencil, Tailwind
+   - Both recommended if project uses Tailwind
 
 7. **Strictness**
    - "How strict should design rules be?"
@@ -184,14 +185,34 @@ Ask questions ONE AT A TIME using AskUserQuestion.
      - Standard (max 12 colors, contrast 4.5 WCAG AA) — recommended
      - Strict (max 8 colors, contrast 7.0 WCAG AAA)
 
+8. **Multi-brand?**
+   - "Do you need multiple brand palettes?"
+   - Options: No (single brand) — recommended, Yes
+   - If "No": skip to After Questions
+
+9. **Brand names** (only if multi-brand)
+   - "Name your brands (comma-separated, e.g., acme, partner-co)"
+
+10. **Brand colors** (only if multi-brand)
+    - For each brand, ask:
+      - "Primary color for {brand}? (hex value)"
+      - "Secondary color for {brand}? (hex value)"
+      - "Font family for {brand}? (or 'use default')"
+
+11. **Active brand** (only if multi-brand)
+    - "Which brand should be active by default?"
+    - Options: list the brand names entered in Q9
+
 ### After questions:
 
-1. Write `.kalos.yaml` to project root with `extends`, `version: 0.1.0`,
-   and any overrides from user answers
+1. Write `.kalos.yaml` to project root with `extends`, `version: 0.2.0`,
+   and any overrides from user answers.
+   If multi-brand was selected, also write the `brands:` section with palettes and active brand.
 2. Run the **Instruction Injection Procedure** to write KALOS section
    to CLAUDE.md
-3. Confirm: "Design standards set up. Run `/kalos check` after creating
-   designs to validate them, or `/kalos sync` to push tokens to Pencil."
+3. Confirm: "Design standards set up. Run `/kalos check` to validate designs,
+   `/kalos sync` to push tokens to adapters, or `/kalos extract` to
+   bootstrap from existing artifacts."
 
 ---
 
