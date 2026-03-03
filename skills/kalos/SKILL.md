@@ -268,7 +268,86 @@ If Pencil MCP tools are not available but `pencil` is in adapters:
 
 ## /kalos sync — Push Tokens to Adapters
 
-(See Task 6)
+Push resolved design tokens to adapter targets.
+
+### Flow:
+
+1. **Load config** — resolve `.kalos.yaml` using 3-tier resolution.
+   If no `.kalos.yaml`: "No Kalos config found. Run `/kalos init` first."
+
+2. **For each enabled adapter**, run sync:
+
+#### Pencil Adapter Sync
+
+Only runs if `pencil` is in the `adapters` list AND Pencil MCP tools
+are available.
+
+**Steps:**
+
+a. Check MCP connection via `mcp__pencil__get_editor_state`.
+
+b. Read current Pencil variables via `mcp__pencil__get_variables`.
+
+c. Build variable set from resolved tokens:
+
+   ```yaml
+   # Map tokens to Pencil variables
+   variables:
+     color-primary:
+       type: color
+       value: <tokens.colors.primary>
+     color-secondary:
+       type: color
+       value: <tokens.colors.secondary>
+     color-success:
+       type: color
+       value: <tokens.colors.semantic.success>
+     color-warning:
+       type: color
+       value: <tokens.colors.semantic.warning>
+     color-error:
+       type: color
+       value: <tokens.colors.semantic.error>
+     color-info:
+       type: color
+       value: <tokens.colors.semantic.info>
+     font-family:
+       type: string
+       value: <tokens.typography.font_family>
+     font-base-size:
+       type: number
+       value: <tokens.typography.base_size>
+     spacing-base:
+       type: number
+       value: <tokens.spacing.base>
+     radius-sm:
+       type: number
+       value: <tokens.radii.sm>
+     radius-md:
+       type: number
+       value: <tokens.radii.md>
+     radius-lg:
+       type: number
+       value: <tokens.radii.lg>
+   ```
+
+d. Push via `mcp__pencil__set_variables` with the built variable set.
+
+e. Confirm:
+   ```
+   Kalos Sync — <project_name>
+   Pencil: pushed {n} variables
+     Colors: primary, secondary, success, warning, error, info
+     Typography: font-family, font-base-size
+     Spacing: spacing-base
+     Radii: sm, md, lg
+   ```
+
+### Without Pencil MCP:
+
+```
+[SKIP] Pencil adapter: MCP not connected. Open Pencil and restart session.
+```
 
 ---
 
