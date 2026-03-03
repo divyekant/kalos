@@ -798,6 +798,99 @@ reconstruction. Options 1 and 2 continue to Stage 3.
 
 ---
 
+### Stage 3: Reconstruct
+
+Generate editable components from the UI Model via enabled adapters.
+Each adapter translates the UI Model into its own format.
+
+#### Pre-check
+
+Verify at least one adapter is available:
+- Pencil: check `mcp__pencil__get_editor_state`
+- Tailwind: always available (generates files)
+
+If no adapter can run: "No adapters available for reconstruction.
+Use option 3 (Stop here) or 4 (Feed into Kalos) from the audit."
+
+#### Pencil Adapter Reconstruct
+
+Only runs if `pencil` is in adapters AND Pencil MCP is connected.
+
+**Steps:**
+
+a. Create or open .pen file:
+   - Default path: `docs/designs/import-<source-name>.pen`
+   - If user passed `--output=<path>`, use that path
+   - Use `mcp__pencil__open_document` to open or create
+
+b. Get design guidelines:
+   - `mcp__pencil__get_style_guide_tags` → select relevant tags
+   - `mcp__pencil__get_style_guide` with selected tags
+   - `mcp__pencil__get_guidelines` for layout rules
+
+c. Set token variables via `mcp__pencil__set_variables`:
+   - Map discovered colors to `color-primary`, `color-secondary`, etc.
+   - Map fonts to `font-family`
+   - Map spacing to `spacing-base`
+   - Map radii to `radius-sm`, `radius-md`, `radius-lg`
+
+d. Generate components using `mcp__pencil__batch_design` in order:
+   - **Atoms first** — smallest components (Button, Badge, Input)
+     as reusable Pencil components (`reusable: true`)
+   - **Molecules** — composed components using atom refs
+   - **Organisms** — larger sections using molecule/atom refs
+   - **Pages** — full layout compositions using all component refs
+
+   Each batch_design call should have max 25 operations.
+   Use Insert (I) for new components, Update (U) for properties,
+   and set `reusable: true` on component definitions.
+
+e. Handle variants:
+   - Components with visual variants get separate reusable definitions
+     (e.g., `Button-primary`, `Button-secondary`, `Button-ghost`)
+
+f. Visual verification:
+   - `mcp__pencil__get_screenshot` on generated page
+   - For URL imports: compare against original screenshot using
+     Claude vision. Note significant deviations.
+
+#### Tailwind Adapter Reconstruct
+
+Only runs if `tailwind` is in adapters.
+
+**Steps:**
+
+a. For each component in the UI Model, generate a component file
+   using Kalos CSS custom properties:
+   - Colors: `var(--kalos-color-primary)`, etc.
+   - Spacing: Tailwind classes mapped to token scale
+   - Radii: Tailwind rounded classes mapped to token radii
+
+b. File output: `kalos-import/<ComponentName>.tsx` (or `.vue`, `.svelte`
+   matching the source file format if detectable)
+
+c. If `kalos-tokens.css` doesn't exist, generate it via the existing
+   Tailwind Adapter Sync process.
+
+#### Output
+
+```
+Kalos Import — Reconstruct
+Generated: docs/designs/import-dashboard.pen
+
+Components: <n> (<reusable> reusable, <instances> instances)
+  Atoms: <list with variant counts>
+  Molecules: <list>
+  Organisms: <list>
+  Pages: <list>
+
+Variables set: <n> colors, <n> fonts, <n> spacing, <n> radii
+
+Visual match: ~<percent>% (<notes on deviations>)
+```
+
+---
+
 ## Brand Switching
 
 Switch the active brand and re-sync all adapters.
