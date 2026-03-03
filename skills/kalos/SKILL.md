@@ -108,7 +108,73 @@ config change.
 
 ## /kalos init — Interactive Onboarding
 
-(See Task 4)
+Set up design tokens and rules for the current project.
+
+### First-Run Detection
+
+Before handling init, check if `~/.kalos/defaults.yaml` exists.
+
+If it does NOT exist:
+- Say: "Welcome to Kalos! Let's set up your design defaults first."
+- Create `~/.kalos/` directory structure:
+  ```
+  ~/.kalos/
+    defaults.yaml
+    templates/
+      modern.yaml
+      minimal.yaml
+  ```
+- Copy template files from this skill's source: `../../config/templates/`
+- Copy defaults from: `../../config/defaults.example.yaml`
+- Then continue with project-level init below.
+
+### Flow:
+
+Ask questions ONE AT A TIME using AskUserQuestion.
+
+1. **Template choice**
+   - "Which design template?"
+   - Options: list template names from `~/.kalos/templates/`
+     (typically: modern, minimal)
+   - This sets the `extends` value
+
+2. **Primary color**
+   - "Primary brand color? (hex value or 'use template default')"
+   - Show the template default as reference
+
+3. **Secondary color**
+   - "Secondary/accent color? (hex value or 'use template default')"
+
+4. **Font family**
+   - "Primary font family?"
+   - Options: Inter, system-ui, Custom (ask for value)
+   - Default from template
+
+5. **Spacing base unit**
+   - "Base spacing unit?"
+   - Options: 4px (recommended), 8px, Custom
+   - Default from template
+
+6. **Adapters**
+   - "Which adapters to enable?"
+   - Multi-select: Pencil (recommended for v0.1.0)
+   - Note: Tailwind adapter coming in v0.2.0
+
+7. **Strictness**
+   - "How strict should design rules be?"
+   - Options:
+     - Relaxed (max 16 colors, contrast 3.0)
+     - Standard (max 12 colors, contrast 4.5 WCAG AA) — recommended
+     - Strict (max 8 colors, contrast 7.0 WCAG AAA)
+
+### After questions:
+
+1. Write `.kalos.yaml` to project root with `extends`, `version: 0.1.0`,
+   and any overrides from user answers
+2. Run the **Instruction Injection Procedure** to write KALOS section
+   to CLAUDE.md
+3. Confirm: "Design standards set up. Run `/kalos check` after creating
+   designs to validate them, or `/kalos sync` to push tokens to Pencil."
 
 ---
 
