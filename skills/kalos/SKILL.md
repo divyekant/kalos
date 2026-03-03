@@ -745,6 +745,59 @@ The UI Model is held in memory — not persisted as a file.
 
 ---
 
+### Stage 2: Audit (Checkpoint 1)
+
+Present discovered findings to the user and pause for confirmation
+before proceeding.
+
+#### Output Format
+
+```
+Kalos Import — Audit
+Source: <source> (<n> files | URL)
+
+Tokens Discovered:
+  Colors: <hex> (<n> uses), <hex> (<n> uses), ...
+  Fonts: <family> (primary, <n> uses), <family> (fallback)
+  Spacing: base appears to be <n>px (values: <list>)
+  Radii: <list>
+
+Components Found: <n>
+  Layout: <component list>
+  Data Display: <component list with variant counts>
+  Forms: <component list with variant counts>
+  Navigation: <component list>
+  Feedback: <component list>
+
+Potential Issues:
+  [WARN] <n> colors not mappable to semantic tokens (<list>)
+  [WARN] Font size <n>px not on standard type scale
+  [INFO] <n> components have inline styles instead of classes
+```
+
+#### User Choices
+
+Present using AskUserQuestion:
+
+1. **Continue to Reconstruct** — proceed to generate components via
+   enabled adapters. Only available if at least one adapter is enabled
+   and its MCP/tools are available.
+
+2. **Adjust** — let user correct component names, merge similar
+   components, remove false positives, assign semantic color roles.
+   Re-present audit after adjustments.
+
+3. **Stop here** — take the token audit report only. No adapter
+   output. Print summary and exit.
+
+4. **Feed into Kalos** — jump to Integrate stage (Stage 4) with
+   discovered tokens. Skip reconstruction.
+
+Options 3 and 4 are exit ramps — the pipeline ends without
+reconstruction. Options 1 and 2 continue to Stage 3.
+
+---
+
 ## Brand Switching
 
 Switch the active brand and re-sync all adapters.
