@@ -180,7 +180,89 @@ Ask questions ONE AT A TIME using AskUserQuestion.
 
 ## /kalos check — Validate Design Artifacts
 
-(See Task 5)
+Scan design artifacts against declared rules. Returns a violation report.
+
+### Flow:
+
+1. **Load config** — resolve `.kalos.yaml` using 3-tier resolution.
+   If no `.kalos.yaml`: "No Kalos config found. Run `/kalos init` first."
+
+2. **For each enabled adapter**, run validation:
+
+#### Pencil Adapter Validation
+
+Only runs if `pencil` is in the `adapters` list AND Pencil MCP tools
+are available (check with `mcp__pencil__get_editor_state`).
+
+**Steps:**
+
+a. Find all `.pen` files in the project:
+   ```
+   Glob for **/*.pen
+   ```
+
+b. For each `.pen` file, use `mcp__pencil__get_editor_state` to confirm
+   MCP is connected. If not, skip Pencil validation with a warning.
+
+c. Use `mcp__pencil__search_all_unique_properties` on the root nodes with:
+   - `fillColor` — compare against `tokens.colors.*`
+   - `textColor` — compare against `tokens.colors.*`
+   - `strokeColor` — compare against `tokens.colors.*`
+   - `fontSize` — compare against type scale (base_size * ratio^n)
+   - `fontFamily` — compare against `tokens.typography.font_family`
+   - `gap` — compare against spacing scale (base * multipliers)
+   - `padding` — compare against spacing scale
+   - `cornerRadius` — compare against `tokens.radii.*`
+
+d. For each property found, check against rules:
+   - **Color check**: Count unique fill/text/stroke colors. If
+     `> rules.colors.max_unique`, report `[WARN] {n} unique colors
+     found (max: {max})`. If `rules.colors.require_semantic` and a
+     color doesn't match any token, report `[WARN] Unlisted color
+     {hex} not in design tokens`.
+   - **Typography check**: Count unique font families. If
+     `> rules.typography.max_font_families`, report `[WARN] {n} font
+     families found (max: {max})`. If `rules.typography.require_scale`
+     and a font size doesn't match `base * ratio^n` for any integer n
+     (0-10), report `[WARN] Font size {px} not on type scale`.
+   - **Spacing check**: If `rules.spacing.require_base_unit` and a
+     gap/padding value is not `base * multiplier` for any multiplier
+     in the scale, report `[WARN] Spacing {px} not a multiple of
+     base unit ({base}px)`.
+   - **Corner radius check**: If a radius doesn't match any value in
+     `tokens.radii`, report `[INFO] Corner radius {px} not in token set`.
+
+e. **Contrast check** (if `rules.accessibility.min_contrast` is set):
+   For text nodes, if both textColor and the parent's fillColor are
+   available, calculate relative luminance contrast ratio. If below
+   `min_contrast`, report `[ERROR] Contrast ratio {ratio} below
+   minimum {min} for text "{preview...}"`.
+
+### Output format:
+
+```
+Kalos Check — <project_name>
+Template: <extends> | Adapters: <list>
+
+Pencil: <filename>.pen
+  [OK] 8 unique colors (max: 12)
+  [WARN] Font size 13px not on type scale (base: 16, ratio: 1.25)
+  [WARN] Spacing 7px not a multiple of base unit (4px)
+  [ERROR] Contrast ratio 2.8 below minimum 4.5 for text "Submit"
+  [OK] 1 font family (max: 2)
+  [OK] All corner radii match tokens
+
+Summary: 0 errors, 2 warnings, 0 info
+```
+
+If no violations: "All design artifacts pass validation."
+
+### Without Pencil MCP:
+
+If Pencil MCP tools are not available but `pencil` is in adapters:
+```
+[SKIP] Pencil adapter: MCP not connected. Open Pencil and restart session.
+```
 
 ---
 
