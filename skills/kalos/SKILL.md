@@ -4,7 +4,7 @@ description: >-
   Use when starting a design phase, setting up design tokens, or validating
   design artifacts. Triggers on '/kalos', 'design tokens', 'design standards',
   'design check', or 'design rules'.
-argument_hint: "[init|check|sync|extract]"
+argument_hint: "[init|check|sync|extract|import]"
 allowed_tools:
   - mcp__pencil__batch_get
   - mcp__pencil__search_all_unique_properties
@@ -20,6 +20,21 @@ allowed_tools:
   - Glob
   - Grep
   - AskUserQuestion
+  - mcp__claude-in-chrome__read_page
+  - mcp__claude-in-chrome__computer
+  - mcp__claude-in-chrome__get_page_text
+  - mcp__claude-in-chrome__javascript_tool
+  - mcp__claude-in-chrome__tabs_context_mcp
+  - mcp__claude-in-chrome__tabs_create_mcp
+  - mcp__claude-in-chrome__navigate
+  - mcp__claude-in-chrome__find
+  - mcp__pencil__batch_design
+  - mcp__pencil__get_guidelines
+  - mcp__pencil__get_style_guide_tags
+  - mcp__pencil__get_style_guide
+  - mcp__pencil__find_empty_space_on_canvas
+  - mcp__pencil__snapshot_layout
+  - mcp__pencil__open_document
 ---
 
 # Kalos — Design Governance
@@ -36,7 +51,8 @@ Detect the user's intent:
 | `/kalos init` or "set up design tokens" or "design standards" | **Init** section |
 | `/kalos check` or "check design" or "validate design" | **Check** section |
 | `/kalos sync` or "sync tokens" or "push tokens" | **Sync** section |
-| `/kalos extract` or "bootstrap tokens" or "import design" | **Extract** section |
+| `/kalos extract` or "bootstrap tokens" | **Extract** section |
+| `/kalos import` or "import design" or "code to design" or "reverse engineer" | **Import** section |
 | "switch to {brand}" or "switch brand" or `/kalos sync --brand {name}` | **Brand Switching** (below) |
 | `/kalos` (bare) or "kalos" | **What Next** section |
 
