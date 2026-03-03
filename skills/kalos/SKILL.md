@@ -37,6 +37,7 @@ Detect the user's intent:
 | `/kalos check` or "check design" or "validate design" | **Check** section |
 | `/kalos sync` or "sync tokens" or "push tokens" | **Sync** section |
 | `/kalos extract` or "bootstrap tokens" or "import design" | **Extract** section |
+| "switch to {brand}" or "switch brand" or `/kalos sync --brand {name}` | **Brand Switching** (below) |
 | `/kalos` (bare) or "kalos" | **What Next** section |
 
 ## Config Resolution
@@ -227,6 +228,10 @@ Scan design artifacts against declared rules. Returns a violation report.
 
 2. **For each enabled adapter**, run validation:
 
+**Brand awareness:** If `brands:` is configured, validate against the
+active brand's resolved tokens (after brand resolution), not the base
+`tokens.*` values.
+
 #### Pencil Adapter Validation
 
 Only runs if `pencil` is in the `adapters` list AND Pencil MCP tools
@@ -345,6 +350,19 @@ Tailwind: tailwind.config.ts
   [OK] Border radii match tokens
 ```
 
+#### Brand Palette Validation
+
+Only runs if `brands:` is configured with multiple palettes.
+
+Check that all palettes define the same set of keys:
+- For each palette, collect all defined keys (e.g., `colors.primary`,
+  `colors.secondary`, `typography.font_family`)
+- Compare key sets across palettes
+- If a palette is missing a key that others have:
+  `[ERROR] Brand '{name}' missing key: {key}`
+- If all palettes are consistent:
+  `[OK] All {n} brand palettes have consistent keys`
+
 ---
 
 ## /kalos sync — Push Tokens to Adapters
@@ -357,6 +375,11 @@ Push resolved design tokens to adapter targets.
    If no `.kalos.yaml`: "No Kalos config found. Run `/kalos init` first."
 
 2. **For each enabled adapter**, run sync:
+
+**Brand awareness:** If `brands:` is configured, sync uses the active
+brand's resolved tokens. The Pencil adapter pushes active brand colors.
+The Tailwind adapter generates `:root` with active brand defaults plus
+`[data-brand="X"]` blocks for all palettes.
 
 #### Pencil Adapter Sync
 
@@ -563,6 +586,37 @@ discovered values.
 Extract only reads from adapter sources (Pencil, Tailwind, CSS).
 No code parsing, no screenshot analysis — that belongs to a separate
 code-to-design tool.
+
+---
+
+## Brand Switching
+
+Switch the active brand and re-sync all adapters.
+
+### Flow:
+
+1. **Parse brand name** from user message (e.g., "switch to acme").
+
+2. **Validate** — check that the brand name exists in `brands.palettes`.
+   If not: "Brand '{name}' not found. Available: {list of palette names}."
+
+3. **Update config** — change `brands.active` to the new brand name
+   in `.kalos.yaml`.
+
+4. **Re-inject** — run Instruction Injection with the new active brand's
+   resolved colors and font.
+
+5. **Re-sync** — run `/kalos sync` for all enabled adapters with the
+   new active brand.
+
+6. **Confirm:**
+   ```
+   Switched to brand: {name}
+   - Primary: {color}, Secondary: {color}
+   - Font: {family}
+   - Re-injected CLAUDE.md
+   - Re-synced: {adapter list}
+   ```
 
 ---
 
