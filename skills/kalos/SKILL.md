@@ -600,8 +600,8 @@ discovered values.
 ### Constraint:
 
 Extract only reads from adapter sources (Pencil, Tailwind, CSS).
-No code parsing, no screenshot analysis — that belongs to a separate
-code-to-design tool.
+No code parsing, no screenshot analysis — use `/kalos import` for
+reading source code and live URLs.
 
 ---
 
@@ -1001,8 +1001,9 @@ next action.
 
 2. **In a project but no `.kalos.yaml`**
    → "This project doesn't have Kalos config yet. Run `/kalos init`
-   to set up design tokens and rules, or `/kalos extract` to bootstrap
-   from existing artifacts."
+   to set up design tokens and rules, `/kalos extract` to bootstrap
+   from existing artifacts, or `/kalos import` to reverse-engineer
+   from source code or a live URL."
 
 3. **KALOS section missing or drifted in CLAUDE.md**
    → Re-inject the managed section automatically using the
