@@ -282,6 +282,49 @@ If Pencil MCP tools are not available but `pencil` is in adapters:
 
 ---
 
+#### Tailwind Adapter Validation
+
+Only runs if `tailwind` is in the `adapters` list.
+
+**Steps:**
+
+a. Look for Tailwind config in project root: `tailwind.config.ts`,
+   `tailwind.config.js`, or `tailwind.config.mjs`. If not found, skip
+   with `[SKIP] Tailwind: no config file found`.
+
+b. Read the Tailwind config theme values (colors, spacing, radii, fonts).
+
+c. Compare against resolved Kalos tokens:
+   - **Colors**: Do config color hex values match `tokens.colors.*`?
+     If mismatch: `[WARN] Tailwind color '{name}' is {actual},
+     expected {token}`.
+   - **Spacing**: Do spacing values match `base * multipliers` from
+     the token scale? If extra: `[WARN] Tailwind spacing '{key}'
+     ({value}) not in token scale`.
+   - **Radii**: Do border-radius values match `tokens.radii.*`?
+     If mismatch: `[WARN] Tailwind radius '{name}' is {actual},
+     expected {token}`.
+   - **Fonts**: Does `fontFamily` match `tokens.typography.font_family`?
+     If mismatch: `[WARN] Tailwind font family doesn't match token`.
+
+d. Check for stale generated files:
+   - If `kalos.tailwind.config.ts` exists, compare against what sync
+     would generate. If different: `[WARN] kalos.tailwind.config.ts
+     is stale — run /kalos sync`.
+   - Same for `kalos-tokens.css`.
+
+**Output:**
+```
+Tailwind: tailwind.config.ts
+  [OK] Colors match tokens
+  [WARN] Spacing value 7px not in token scale
+  [WARN] Generated kalos-tokens.css is stale — run /kalos sync
+  [OK] Font family matches
+  [OK] Border radii match tokens
+```
+
+---
+
 ## /kalos sync — Push Tokens to Adapters
 
 Push resolved design tokens to adapter targets.
