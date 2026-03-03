@@ -632,19 +632,28 @@ next action.
 
 2. **In a project but no `.kalos.yaml`**
    → "This project doesn't have Kalos config yet. Run `/kalos init`
-   to set up design tokens and rules."
+   to set up design tokens and rules, or `/kalos extract` to bootstrap
+   from existing artifacts."
 
 3. **KALOS section missing or drifted in CLAUDE.md**
    → Re-inject the managed section automatically using the
    Instruction Injection Procedure, then confirm:
    "Re-synced design standards with Kalos config."
 
-4. **`.pen` files exist but haven't been checked**
+4. **Tailwind adapter enabled but generated files missing**
+   → "Tailwind adapter is enabled but kalos.tailwind.config.ts or
+   kalos-tokens.css not found. Run `/kalos sync` to generate them."
+
+5. **Generated files are stale**
+   → "Generated Tailwind files are out of date. Run `/kalos sync`
+   to regenerate."
+
+6. **`.pen` files exist but haven't been checked**
    → "Found .pen files in this project. Run `/kalos check` to
    validate them against your design rules."
 
-5. **Everything looks good**
+7. **Everything looks good**
    → "Design standards are set. Use `/kalos check` to validate
-   artifacts, `/kalos sync` to push tokens to Pencil."
+   artifacts, `/kalos sync` to push tokens to adapters."
 
 Only show the FIRST applicable suggestion.
