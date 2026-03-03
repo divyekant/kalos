@@ -4,7 +4,7 @@ description: >-
   Use when starting a design phase, setting up design tokens, or validating
   design artifacts. Triggers on '/kalos', 'design tokens', 'design standards',
   'design check', or 'design rules'.
-argument_hint: "[init|check|sync]"
+argument_hint: "[init|check|sync|extract]"
 allowed_tools:
   - mcp__pencil__batch_get
   - mcp__pencil__search_all_unique_properties
@@ -36,6 +36,7 @@ Detect the user's intent:
 | `/kalos init` or "set up design tokens" or "design standards" | **Init** section |
 | `/kalos check` or "check design" or "validate design" | **Check** section |
 | `/kalos sync` or "sync tokens" or "push tokens" | **Sync** section |
+| `/kalos extract` or "bootstrap tokens" or "import design" | **Extract** section |
 | `/kalos` (bare) or "kalos" | **What Next** section |
 
 ## Config Resolution
@@ -489,6 +490,58 @@ d. Confirm:
      kalos.tailwind.config.ts — theme extension with CSS var references
      kalos-tokens.css — custom properties (default + {n} brand overrides)
    ```
+
+---
+
+## /kalos extract — Bootstrap Config from Existing
+
+Read existing design artifacts and generate a `.kalos.yaml` from
+discovered values.
+
+### Flow:
+
+1. **Detect available sources** — check which adapters have artifacts:
+   - Pencil: Glob for `**/*.pen`. If found, use
+     `mcp__pencil__search_all_unique_properties` on root nodes to
+     discover `fillColor`, `textColor`, `fontSize`, `fontFamily`,
+     `gap`, `padding`, `cornerRadius` values.
+   - Tailwind: Look for `tailwind.config.ts` (or `.js`, `.mjs`).
+     If found, read theme extension values for colors, spacing,
+     fonts, radii.
+   - CSS: Glob for `**/globals.css`, `**/global.css`, `**/vars.css`,
+     or files containing `:root {`. Parse CSS custom property
+     definitions for color, font, spacing, radius values.
+
+2. **Merge discovered values:**
+   - Deduplicate colors, sort by usage frequency
+   - Identify most-used font as primary font family
+   - Infer spacing base from GCD of discovered spacing values
+   - Collect unique radii values and map to sm/md/lg/xl
+
+3. **Present findings to user:**
+   ```
+   Kalos Extract — discovered tokens:
+     Sources: <list of sources found>
+     Colors: #6366F1 (12 uses), #EC4899 (8 uses), #22C55E (4 uses)...
+     Font: Inter (primary), system-ui (fallback)
+     Spacing: base appears to be 4px (values: 4, 8, 12, 16, 24, 32)
+     Radii: 0, 4, 8, 12
+
+   Suggested template: modern (closest match)
+   Use these as your Kalos config?
+   ```
+
+4. **If user approves** — write `.kalos.yaml` with discovered values,
+   set `extends` to suggested template, run Instruction Injection.
+
+5. **If user wants changes** — let them adjust values before writing.
+   Re-present updated config for confirmation.
+
+### Constraint:
+
+Extract only reads from adapter sources (Pencil, Tailwind, CSS).
+No code parsing, no screenshot analysis — that belongs to a separate
+code-to-design tool.
 
 ---
 
