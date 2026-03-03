@@ -889,6 +889,73 @@ Variables set: <n> colors, <n> fonts, <n> spacing, <n> radii
 Visual match: ~<percent>% (<notes on deviations>)
 ```
 
+### Stage 4: Integrate (Checkpoint 2)
+
+After Reconstruct completes (or after Audit if user chose option 4),
+offer Kalos config integration.
+
+#### Options
+
+Present using AskUserQuestion:
+
+1. **Create new .kalos.yaml** — bootstrap full config from discovered
+   tokens. Same flow as `/kalos extract`: write `.kalos.yaml` with
+   tokens, suggest closest template based on discovered values
+   (modern if relaxed, minimal if few tokens, brand if strict),
+   run Instruction Injection.
+
+2. **Add as brand palette** — add discovered tokens as a new brand.
+   Ask for brand name. Write palette under `brands.palettes`:
+   ```yaml
+   brands:
+     palettes:
+       <brand-name>:
+         colors:
+           primary: "<discovered primary>"
+           secondary: "<discovered secondary>"
+           neutral: "<discovered neutral>"
+           semantic:
+             success: "<discovered>"
+             warning: "<discovered>"
+             error: "<discovered>"
+             info: "<discovered>"
+         typography:
+           font_family: "<discovered font>"
+   ```
+   If `brands:` doesn't exist yet, create it with current tokens as
+   "default" palette and imported tokens as the new brand. Set
+   `brands.active` to the new brand.
+
+3. **Update existing config** — deep merge discovered tokens into
+   current `.kalos.yaml`. Show diff before writing:
+   ```
+   These values will change:
+     primary: #6366F1 → #4F46E5
+     secondary: #EC4899 → #8B5CF6
+     font_family: "Inter" → "Geist"
+   Confirm?
+   ```
+   Only write after user confirms.
+
+4. **Skip** — no config changes. User keeps the audit report and
+   any generated adapter files. Print summary and exit.
+
+#### Post-Integration
+
+If user chose option 1, 2, or 3:
+- Run Instruction Injection to update CLAUDE.md
+- If adapters are enabled, offer to run `/kalos sync`
+
+#### Final Summary
+
+```
+Kalos Import — Complete
+Source: <source>
+Tokens: <n> colors, <n> fonts, <n> spacing, <n> radii
+Components: <n> generated via <adapter list>
+Config: <action taken or "no changes">
+```
+
 ---
 
 ## Brand Switching
