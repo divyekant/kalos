@@ -57,6 +57,20 @@ Kalos uses three-tier config resolution. Later tiers override earlier ones.
 **Merge strategy:** Deep merge. Nested keys override individually, not entire
 objects. Arrays replace (not concatenate).
 
+### Brand Resolution
+
+When the resolved config contains a `brands:` section with an `active` key:
+
+1. Look up `brands.palettes.<active>` — this is the active palette
+2. Deep merge the active palette's `colors` on top of `tokens.colors`
+3. Deep merge the active palette's `typography` on top of `tokens.typography`
+4. The result is the **effective config** used by check, sync, and injection
+
+Any key not specified in the active palette falls back to the base `tokens.*`.
+Spacing and radii are never overridden by brands — they are structural.
+
+If `brands:` is absent, skip brand resolution entirely (backward compatible).
+
 ## Instruction Injection Procedure
 
 Called by `/kalos init`, `/kalos` (bare, when drift detected), and after any
@@ -83,6 +97,8 @@ config change.
    | `rules.accessibility.min_contrast` | "Min contrast ratio: {n} (WCAG AA)" |
    | `rules.accessibility.require_alt_text: true` | "Require alt text on all images" |
    | `rules.components.naming` | "Component naming: {convention}" |
+   | `brands.active` | "Active brand: {name}" |
+   | `brands.palettes` (count) | "{n} brand palettes configured" |
 
    Only include instructions for config values that are set and meaningful.
 
